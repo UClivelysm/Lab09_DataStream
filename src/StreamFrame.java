@@ -28,10 +28,10 @@ public class StreamFrame extends JFrame {
     JButton addOutputFileButton;
 
     JTextArea rawTextArea;
-    JScrollPane scrollPane1;
+    JScrollPane rawScrollPane;
 
     JTextArea filteredTextArea;
-    JScrollPane scrollPane2;
+    JScrollPane filteredScrollPane;
 
     JTextField searchTermTF;
 
@@ -73,16 +73,16 @@ public class StreamFrame extends JFrame {
         rawTextArea = new JTextArea();
         rawTextArea.setEditable(false);
         rawTextArea.setFont(new Font("Monospaced", Font.PLAIN, 16));
-        scrollPane1 = new JScrollPane(rawTextArea);
+        rawScrollPane = new JScrollPane(rawTextArea);
 
         filteredTextArea = new JTextArea();
         filteredTextArea.setEditable(false);
         filteredTextArea.setFont(new Font("Monospaced", Font.PLAIN, 16));
-        scrollPane2 = new JScrollPane(filteredTextArea);
+        filteredScrollPane = new JScrollPane(filteredTextArea);
 
         centerTAPanel = new JPanel(new GridLayout(1, 2));
-        centerTAPanel.add(scrollPane1);
-        centerTAPanel.add(scrollPane2);
+        centerTAPanel.add(rawScrollPane);
+        centerTAPanel.add(filteredScrollPane);
 
 
 
