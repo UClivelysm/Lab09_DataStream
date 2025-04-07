@@ -13,36 +13,35 @@ public class StreamFrame extends JFrame {
     JPanel southButtonsPanel;
     JPanel southInputPanel;
 
-    JPanel centerSouthPanel;
-    JPanel centerFilterBtnPanel;
+    JPanel centerTAPanel;
     JPanel centerFileBtnPanel;
 
     JLabel placeholderLabel;
     JLabel inputFileNameLabel;
-    JLabel filterFileNameLabel;
     JLabel minCountLabel;
 
     JButton goButton;
     JButton quitButton;
 
-    JButton addFilterButton;
-    JButton removeFilterButton;
     JButton addInputFileButton;
     JButton removeInputFileButton;
     JButton addOutputFileButton;
 
-    JTextArea textArea;
-    JScrollPane scrollPane;
+    JTextArea rawTextArea;
+    JScrollPane scrollPane1;
 
-    JTextField minFrequencyTF;
+    JTextArea filteredTextArea;
+    JScrollPane scrollPane2;
 
-    File filterFile = null;
+    JTextField searchTermTF;
+
     File inputFile = null;
-    String returnedString = "";
+    String rawString = "";
+    String filteredString = "";
 
 
     public StreamFrame() {
-        super("Extractor App");
+        super("File Stream Searcher");
 
         setLayout(new BorderLayout());
 
@@ -53,13 +52,13 @@ public class StreamFrame extends JFrame {
 
         // Frame settings
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(800, 600);
+        setSize(1000, 800);
         setLocationRelativeTo(null); // Center on screen
     }
 
     private JPanel createNorthPanel() {
         northPanel = new JPanel();
-        placeholderLabel = new JLabel("Tag Extractor Version 0.0.1", SwingConstants.CENTER);
+        placeholderLabel = new JLabel("File Stream Searcher Version 0.0.1", SwingConstants.CENTER);
         northPanel.add(placeholderLabel);
         return northPanel;
     }
@@ -68,36 +67,24 @@ public class StreamFrame extends JFrame {
         centerPanel = new JPanel();
         centerPanel.setLayout(new BorderLayout());
         inputFileNameLabel = new JLabel("Input File: No File Selected", SwingConstants.CENTER);
-        filterFileNameLabel = new JLabel("Filter File: No File Selected", SwingConstants.CENTER);
 
         centerNorthPanel = new JPanel(new GridLayout(2, 1));
 
-        textArea = new JTextArea();
-        textArea.setEditable(false);
-        textArea.setFont(new Font("Monospaced", Font.PLAIN, 16));
-        scrollPane = new JScrollPane(textArea);
+        rawTextArea = new JTextArea();
+        rawTextArea.setEditable(false);
+        rawTextArea.setFont(new Font("Monospaced", Font.PLAIN, 16));
+        scrollPane1 = new JScrollPane(rawTextArea);
 
-        centerFilterBtnPanel = new JPanel();
-        centerFilterBtnPanel.setLayout(new GridLayout(2, 1));
-        addFilterButton = new JButton("Add Filter");
-        addFilterButton.addActionListener(e -> {
-            System.out.println("Add Filter");
-            filterFile = FilePicker.GetFile();
-            if (filterFile != null) {
-                System.out.println("Filter File: " + filterFile.getAbsolutePath());
-                filterFileNameLabel.setText("Filter File: " + filterFile.getAbsolutePath());
-            } else {
-                System.out.println("Filter File: No File Selected");
-            }
-        });
-        removeFilterButton = new JButton("Remove Filter");
-        removeFilterButton.addActionListener(e -> {
-            System.out.println("Remove Filter");
-            filterFile = null;
-            filterFileNameLabel.setText("Filter File: No File Selected");
-        });
-        centerFilterBtnPanel.add(addFilterButton);
-        centerFilterBtnPanel.add(removeFilterButton);
+        filteredTextArea = new JTextArea();
+        filteredTextArea.setEditable(false);
+        filteredTextArea.setFont(new Font("Monospaced", Font.PLAIN, 16));
+        scrollPane2 = new JScrollPane(filteredTextArea);
+
+        centerTAPanel = new JPanel(new GridLayout(1, 2));
+        centerTAPanel.add(scrollPane1);
+        centerTAPanel.add(scrollPane2);
+
+
 
         centerFileBtnPanel = new JPanel();
         centerFileBtnPanel.setLayout(new GridLayout(2, 1));
@@ -108,6 +95,8 @@ public class StreamFrame extends JFrame {
             if (inputFile != null) {
                 System.out.println("Input File: " + inputFile.getAbsolutePath());
                 inputFileNameLabel.setText("Input File: " + inputFile.getAbsolutePath());
+                rawString = FilePicker.SimpleStreamRead(inputFile);
+                rawTextArea.setText(rawString);
             } else {
                 System.out.println("Input File: No File Selected");
             }
@@ -117,20 +106,17 @@ public class StreamFrame extends JFrame {
             System.out.println("Remove Input File");
             inputFile = null;
             inputFileNameLabel.setText("Input File: No File Selected");
+            rawTextArea.setText("");
+            filteredTextArea.setText("");
         });
         centerFileBtnPanel.add(addInputFileButton);
         centerFileBtnPanel.add(removeInputFileButton);
 
-        centerSouthPanel = new JPanel();
-        centerSouthPanel.setLayout(new GridLayout(1, 2));
-        centerSouthPanel.add(centerFileBtnPanel);
-        centerSouthPanel.add(centerFilterBtnPanel);
 
         centerNorthPanel.add(inputFileNameLabel);
-        centerNorthPanel.add(filterFileNameLabel);
 
-        centerPanel.add(centerSouthPanel, BorderLayout.SOUTH);
-        centerPanel.add(scrollPane, BorderLayout.CENTER);
+        centerPanel.add(centerFileBtnPanel, BorderLayout.SOUTH);
+        centerPanel.add(centerTAPanel, BorderLayout.CENTER);
         centerPanel.add(centerNorthPanel, BorderLayout.NORTH);
         return centerPanel;
     }
@@ -138,70 +124,54 @@ public class StreamFrame extends JFrame {
     private JPanel createSouthPanel() {
         southPanel = new JPanel(new GridLayout(1, 2));
 
-        goButton = new JButton("Start");
+        goButton = new JButton("Search");
         quitButton = new JButton("Quit");
         addOutputFileButton = new JButton("Output to File");
-        minCountLabel = new JLabel("Enter the minimum word count:");
-        minFrequencyTF = new JTextField(4);
-        minFrequencyTF.setText("3");
+        minCountLabel = new JLabel("Search Term:");
+        searchTermTF = new JTextField(35);
+        searchTermTF.setText("Hello World!");
 
-        southButtonsPanel = new JPanel(new GridLayout(1, 3));
-        southInputPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        southButtonsPanel = new JPanel(new GridLayout(1, 2));
+        southInputPanel = new JPanel(new GridLayout(2, 1));
 
-        // Add lambda-based action listeners
+
         goButton.addActionListener(e -> {
-            if (filterFile == null && inputFile != null) {
-                int minCount;
-                try {
-                    // Parse the input value from the text field
-                    minCount = Integer.parseInt(minFrequencyTF.getText().trim());
-                    // Validate the integer is in the allowed range 1-9999
-                    if (minCount < 1 || minCount > 9999) {
-                        throw new NumberFormatException();
-                    }
-                } catch (NumberFormatException ex) {
-                    // Show a dialog box if the input is not a valid int or not in range
-                    JOptionPane.showMessageDialog(null, "You must enter a valid int 1-9999", "Invalid Input", JOptionPane.ERROR_MESSAGE);
-                    return; // Exit the action listener if input is invalid
-                }
-                returnedString = FilePicker.GenerateMap(inputFile, minCount);
-                textArea.setText(returnedString);
-            } else if (filterFile != null && inputFile != null) {
-                int minCount;
-                try {
-                    // Parse the input value from the text field
-                    minCount = Integer.parseInt(minFrequencyTF.getText().trim());
-                    // Validate the integer is in the allowed range 1-9999
-                    if (minCount < 1 || minCount > 9999) {
-                        throw new NumberFormatException();
-                    }
-                } catch (NumberFormatException ex) {
-                    // Show a dialog box if the input is not a valid int or not in range
-                    JOptionPane.showMessageDialog(null, "You must enter a valid int 1-9999", "Invalid Input", JOptionPane.ERROR_MESSAGE);
-                    return; // Exit the action listener if input is invalid
-                }
-                returnedString = FilePicker.GenerateFilteredMap(inputFile, filterFile,minCount);
-                textArea.setText(returnedString);
-            } else {
-                JOptionPane.showMessageDialog(null, "You must have a input file and optionally a filter file", "No Input File Selected", JOptionPane.ERROR_MESSAGE);
+            if (inputFile == null) {
+                JOptionPane.showMessageDialog(null, "No file selected.", "Invalid File", JOptionPane.ERROR_MESSAGE);
+                return;
             }
+            // Retrieve and trim the search term from the text field
+            String searchTerm = searchTermTF.getText().trim();
+
+            // Validate that the search term is not empty
+            if (searchTerm.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "Search term cannot be empty.", "Invalid Input", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // Validate that the search term has a length of 35 characters or fewer
+            if (searchTerm.length() > 35) {
+                JOptionPane.showMessageDialog(null, "Search term must be 35 characters or fewer.", "Invalid Search Term", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // Call the method to process the search term (to be implemented)
+            if (inputFile != null) {
+                filteredString = FilePicker.SearchedStreamRead(inputFile, searchTerm);
+                filteredTextArea.setText(filteredString);
+            } else {
+                JOptionPane.showMessageDialog(null, "No file selected.", "Invalid File", JOptionPane.ERROR_MESSAGE);
+            }
+
         });
 
-        addOutputFileButton.addActionListener(e -> {
-            if (returnedString != null && !returnedString.trim().isEmpty()) {
-                FilePicker.FileWriter(returnedString);
-            } else {
-                JOptionPane.showMessageDialog(null, "There is nothing to write", "Nothing to Write", JOptionPane.ERROR_MESSAGE);
-            }
-        });
 
-        quitButton.addActionListener(e -> System.exit(0));
+
 
         // Add the text field so the user can enter the min frequency
         southInputPanel.add(minCountLabel);
-        southInputPanel.add(minFrequencyTF);
+        southInputPanel.add(searchTermTF);
         southButtonsPanel.add(goButton);
-        southButtonsPanel.add(addOutputFileButton);
         southButtonsPanel.add(quitButton);
 
         southPanel.add(southInputPanel);
