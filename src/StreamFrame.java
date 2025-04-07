@@ -165,7 +165,7 @@ public class StreamFrame extends JFrame {
 
         });
 
-
+        quitButton.addActionListener(e -> System.exit(0));
 
 
         // Add the text field so the user can enter the min frequency
